@@ -83,11 +83,12 @@ User.all.each_with_index do |user,i|
         order_total: 0
     )
 
+    orders = []
     5.times do |order_count|
         unit_price = rand_int(5,99)
         quantity = rand_int(1,5)
         product_offset = rand(Product.count)
-        OrderDetail.create!(
+        orders << OrderDetail.create!(
             order_id: order.id,
             product_id: Product.offset(product_offset).first.id,
             sku: Product.first.sku,
@@ -96,6 +97,17 @@ User.all.each_with_index do |user,i|
             sub_total: quantity * unit_price
         )
     end
+
+
+    #puts order.items.group(:order_id).to_sql
+
+    #order.order_total = order.items.group(:order_id).sum(:sub_total)
+
+    # order.join(:items).group('order_id').pluck("sum(items.sub_total) as sub_total").to_sql
+    
+    sub_total = Order.joins(:items).where("order_details.order_id = ?", order.id).sum(:sub_total)
+    order.order_total = sub_total
+    order.save!
     puts "#{i} order created!"
 end
 
